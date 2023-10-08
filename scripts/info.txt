@@ -1,0 +1,29 @@
+# =======================================================
+    INFORMATION
+# =======================================================
+Lots of experiments are going to be ran. 
+To not mess up I started this document in which I state what are the files
+
+# =======================================================
+    INTERACTIVE FILES
+# =======================================================
+
+The following notebooks are only for testing and designing purposes. "int" stands for "interactive".
+    int_analysis
+    int_simuations
+
+# =======================================================
+    EXPERIMENTS
+# =======================================================
+
+bsim_rot
+    Bmax: 1mT
+    Ramp: None
+    Rotation: 60s
+
+bsim_rrot_20mT
+    Bmax: 20mT
+    Ramp: 60s
+    Rotation: 60s
+
+bsim_rrot_20mT
