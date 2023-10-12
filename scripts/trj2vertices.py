@@ -25,9 +25,9 @@ import icenumerics as ice
 ureg = ice.ureg
 idx = pd.IndexSlice
 
-trjPath = "../data/ramp_and_rotation_20mT/trj/"
-ctrjPath = "../data/ramp_and_rotation_20mT/ctrj/"
-verticesPath = "../data/ramp_and_rotation_20mT/vertices/"
+trjPath = "../data/rrot5mT60s60s/trj/"
+ctrjPath = "../data/rrot5mT60s60s/ctrj/"
+verticesPath = "../data/rrot5mT60s60s/vertices/"
 
 # Get the number of realizations
 _, _, files = next(os.walk(trjPath))
@@ -49,7 +49,7 @@ for i in range(1,realizations+1):
     frames = ctrj_raw.index.get_level_values("frame").unique()
 
     verticesFile = verticesPath + f"vertices{i}.csv"
-    v.trj_to_vertices(ctrj_raw.loc[frames[:]])
+    v.trj_to_vertices(ctrj_raw.loc[frames[::5]])
 
     print(f"Saving vertices to " + verticesFile)
     v.vertices.to_csv(verticesFile)
