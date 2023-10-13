@@ -25,9 +25,9 @@ import icenumerics as ice
 ureg = ice.ureg
 idx = pd.IndexSlice
 
-trjPath = "../data/rrot5mT60s60s/trj/"
-ctrjPath = "../data/rrot5mT60s60s/ctrj/"
-verticesPath = "../data/rrot5mT60s60s/vertices/"
+trjPath = "../data/rot60deg_ramp5mT60s_evo60s/trj/"
+ctrjPath = "../data/rot60deg_ramp5mT60s_evo60s/ctrj/"
+verticesPath = "../data/rot60deg_ramp5mT60s_evo60s/vertices/"
 
 # Get the number of realizations
 _, _, files = next(os.walk(trjPath))
