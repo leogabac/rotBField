@@ -86,6 +86,28 @@ def getVerticesCount(verticesDict):
     
     return countsDict
 
+def getVerticesAverage(counts):
+    
+    # Get a list containing all the different frames
+    allFrames = counts["1"].index.get_level_values('frame').unique().to_list()
+    framespersec = 100
+    time = np.array(allFrames)/framespersec
+    
+    numberFrames = len(allFrames)
+    numberRealizations = len(counts)
+
+    fractions = pd.DataFrame(columns=["time","I","II","III","IV","V","VI"], data = np.zeros((numberFrames,7)))
+
+    for key,experiment in counts.items():
+        for vertexType,vrt in experiment.groupby("type"):
+            vertexFraction = np.array(vrt.fraction)
+            fractions[vertexType] += vertexFraction
+
+    fractions = fractions / numberRealizations
+    # fractions["theta"] = time * np.pi/2/60 * (180/np.pi)
+    fractions["time"] = time
+    return fractions
+
 def getPaintedFrame(trj,ctrj,frame,framerate):
     v = ice.vertices()
     v = v.trj_to_vertices(ctrj.loc[frame])
