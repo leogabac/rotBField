@@ -86,11 +86,10 @@ def getVerticesCount(verticesDict):
     
     return countsDict
 
-def getVerticesAverage(counts):
+def getVerticesAverage(counts,framespersec):
     
     # Get a list containing all the different frames
     allFrames = counts["1"].index.get_level_values('frame').unique().to_list()
-    framespersec = 20
     time = np.array(allFrames)/framespersec
     
     numberFrames = len(allFrames)

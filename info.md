@@ -11,3 +11,21 @@ Rotation about the y axis for 60s
 Rotated field at 60 degrees
 Ramp up to 5mT for 60s
 Constant field for 60s 
+
+# Test 4
+Rotated field at 60 degrees
+Ramp up to 5mT for 60s
+Constant field for 120s
+
+# Test 5
+Rotated field at 90 degrees (x axis)
+Ramp up to 8mT for 60s
+Constant field for 120s
+
+# Test 6
+Simulated Annealing
+
+# Test 7
+Rotated field at 90 degrees (y axis)
+Ramp up to 8mT for 60s
+Constant field for 120s
