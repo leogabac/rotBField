@@ -12,6 +12,8 @@ import icenumerics as ice
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+ureg = ice.ureg
 idx = pd.IndexSlice
 
 
@@ -128,7 +130,27 @@ def saveAllPaintedFrames(trj,ctrj,frames,framerate,path):
             continue
     return None
     
-        
+def get_colloids_from_ctrj(ctrj,particle,trap):
+    centers = [ row[:3].to_list() * ureg.um for _,row in ctrj.iterrows()]
+    directions = [ row[3:6].to_list() * ureg.um for _,row in ctrj.iterrows()]
+    arrangement = {
+        "centers" : centers,
+        "directions" : directions
+    }
+
+    col = ice.colloidal_ice(arrangement, particle, trap,
+            height_spread = 0, 
+            susceptibility_spread = 0.1,
+            periodic = True)
+    
+    return col
+
+def count_vertices_single(vrt, column = "type"):
+    vrt_count = vrt.groupby(column).count().iloc[:,0]
+    types = vrt_count.index.get_level_values(column).unique()
+    counts = pd.DataFrame({"counts": vrt_count.values}, index=types)
+    counts["fraction"] = counts["counts"] / counts["counts"].sum() 
+    return counts
 
 
 
