@@ -1,10 +1,8 @@
-# rotBField
+# Anisotropic Colloidal Ice
 Rotating Magnetic Field in Colloidal Ice
 
 
 # Scripts information
-
-# Scripts informatino
 
 ## Exploration
 
