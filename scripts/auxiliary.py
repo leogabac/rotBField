@@ -130,7 +130,7 @@ def saveAllPaintedFrames(trj,ctrj,frames,framerate,path):
             continue
     return None
     
-def get_colloids_from_ctrj(ctrj,particle,trap):
+def get_colloids_from_ctrj(ctrj,particle,trap,particleRadius,L,N):
     centers = [ row[:3].to_list() * ureg.um for _,row in ctrj.iterrows()]
     directions = [ row[3:6].to_list() * ureg.um for _,row in ctrj.iterrows()]
     arrangement = {
@@ -142,6 +142,7 @@ def get_colloids_from_ctrj(ctrj,particle,trap):
             height_spread = 0, 
             susceptibility_spread = 0.1,
             periodic = True)
+    col.region = np.array([[0,0,-3*(particleRadius/L/N).magnitude],[1,1,3*(particleRadius/L/N).magnitude]])*N*L
     
     return col
 
