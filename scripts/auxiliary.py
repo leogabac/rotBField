@@ -154,4 +154,21 @@ def count_vertices_single(vrt, column = "type"):
     return counts
 
 
+def get_vertices_last_frame(path,last_frame=2399):
+
+    """
+        Computes the vertices of only the last frame.
+
+        path: where the ctrj file is located
+        last_frame: last frame of the simulation
+    """
+
+    ctrj = pd.read_csv(path,index_col=[0,1])
+    ctrj = ctrj.loc[idx[last_frame,:]].drop(["t", "type"],axis=1)
+
+    v = ice.vertices()
+    v = v.trj_to_vertices(ctrj)
+    return v.vertices
+
+
 
