@@ -164,10 +164,37 @@ def get_vertices_last_frame(path,last_frame=2399):
     """
 
     ctrj = pd.read_csv(path,index_col=[0,1])
+
+    if last_frame is None:
+        last_frame = ctrj.index.get_level_values("frame").unique().max()
+    
     ctrj = ctrj.loc[idx[last_frame,:]].drop(["t", "type"],axis=1)
+
+    try:
+        v = ice.vertices()
+        v = v.trj_to_vertices(ctrj)
+    except:
+        get_vertices_last_frame(path,last_frame=last_frame-1)
+  
+
+    return v.vertices
+
+def get_vertices_at_frame(ctrj,frame):
+
+    """
+        Computes the vertices of a specific frame.
+
+        path: where the ctrj file is located
+        last_frame: last frame of the simulation
+    """
+
+    
+    ctrj = ctrj.loc[idx[frame,:]].drop(["t", "type"],axis=1)
 
     v = ice.vertices()
     v = v.trj_to_vertices(ctrj)
+  
+
     return v.vertices
 
 

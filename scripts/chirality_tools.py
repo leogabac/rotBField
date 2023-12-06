@@ -72,6 +72,11 @@ def create_chiral_lattice(col,global_pos,a=30,L=10):
     
     return global_idx
 
+def normalize_spin(col,idx):
+    vector = col[int(idx)].direction
+    return vector / np.linalg.norm(vector)
+
+
 def calculate_single_chirality(col,idxs):
     """
         Computes the chirality of a single cell.
@@ -79,6 +84,7 @@ def calculate_single_chirality(col,idxs):
         col: colloidal ice object
         idxs: indices of the four colloids in a single cell
     """
+
 
     up = np.array([0,1,0])
     down = -up
@@ -89,7 +95,7 @@ def calculate_single_chirality(col,idxs):
     negative = [left,up,right,down]
 
     # try positive chirality
-    sum_spins = sum(np.dot(col[int(idx)].direction,spin) for idx,spin in zip(idxs,positive))
+    sum_spins = sum(np.dot(normalize_spin(col,idx),spin) for idx,spin in zip(idxs,positive))
 
     if isclose(sum_spins,4,rel_tol=1e-2):
         return 1
@@ -117,7 +123,7 @@ def calculate_chirality(col,chiral_lattice,a,L):
 
     return s
 
-def get_chirality_on_realization(params, angle,realization,last_frame=2399):
+def get_chirality_on_realization(params, angle,realization,last_frame=2399,foldertest='test12'):
 
     """
         CAREFUL WITH THE PATH!
@@ -135,21 +141,21 @@ def get_chirality_on_realization(params, angle,realization,last_frame=2399):
     particle = params["particle"]
     trap = params["trap"]
     particle_radius = params["particle_radius"]
-    L = params["lattice_constant"]
+    L = params["lattice_constant"].magnitude
     N = params["size"]
 
-    angle_path = f"../data/test11/angles/{angle}/ctrj/ctrj{realization}.csv"
+    angle_path = f"../data/{foldertest}/angles/{angle}/ctrj/ctrj{realization}.csv"
     current_ctrj = pd.read_csv(angle_path,index_col=[0,1])
 
     if last_frame is None:
         last_frame = current_ctrj.index.get_level_values("frame").unique().max()
     
     state_ctrj = current_ctrj.loc[idx[last_frame,:]].drop(["t", "type"],axis=1)
-    current_col = get_colloids_from_ctrj(state_ctrj,particle,trap,particle_radius,L.magnitude,N)
+    current_col = get_colloids_from_ctrj(state_ctrj,particle,trap,particle_radius,L,N)
 
-    pos_lattice = create_chiral_space_lattice()
-    idx_lattice = create_chiral_lattice(current_col,pos_lattice,L.magnitude,N)
-    cur_chirality = calculate_chirality(current_col,idx_lattice,L.magnitude,N)
+    pos_lattice = create_chiral_space_lattice(a=L,L=N,spos=(L/2,L/2))
+    idx_lattice = create_chiral_lattice(current_col,pos_lattice,L,N)
+    cur_chirality = calculate_chirality(current_col,idx_lattice,L,N)
 
     return cur_chirality
 
@@ -246,13 +252,13 @@ def get_charge_order(charge_lattice):
     
     return s
 
-def get_charge_order_on_realization(params, angle, realization):
+def get_charge_order_on_realization(params, folder, angle, realization):
 
-    a = params["lattice_constant"]
-    N = params["lattice_constant"]
+    a = params["lattice_constant"].magnitude
+    N = params["size"]
 
-    path = f"../data/test11/vertices/{angle}/vertices{realization}.csv"
-    space_lattice = create_chiral_space_lattice()
+    path = f"../data/{folder}/vertices/{angle}/vertices{realization}.csv"
+    space_lattice = create_chiral_space_lattice(a=a,L=N,spos=(a/2,a/2))
     charge_lattice = create_charge_order_lattice(params, path,space_lattice)
     return get_charge_order(charge_lattice)
 

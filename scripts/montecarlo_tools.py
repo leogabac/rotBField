@@ -69,7 +69,7 @@ def get_index_from_position(col,pos):
         currentPos = c.center.magnitude.round()
         sepNorm = np.linalg.norm(currentPos - pos)
 
-        if isclose(0,sepNorm,rel_tol=1e-16):
+        if isclose(0,sepNorm,abs_tol=0.1):
             return idx
 
 
