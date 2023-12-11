@@ -1,5 +1,6 @@
 # ============================================================= 
-# Some auxiliary functions to deal with chirality
+# Some auxiliary functions to deal with order parameters
+# God bless whoever reads this code
 # Author: leogabac
 # ============================================================= 
 
@@ -26,11 +27,12 @@ idx = pd.IndexSlice
 
 def create_chiral_space_lattice(a=30,L=10,spos=(15,15)):
     """
-        Create a matrix of shape (L,L,3) that stores the coordinates of the centers of the lattices.
-
-        a: lattice constant
-        L: size of the system
-        spos: Tuple that indicates where the first center is located.
+        Create a matrix of shape (L,L,3) that stores the coordinates of the centers of the lattice.
+        ----------
+        Parameters:
+        * a: lattice constant
+        * L: size of the system
+        * spos: Offcenter tuple.
     """
     xstart,ystart = spos
     xcoords = np.linspace(xstart,L*a-xstart,L)
@@ -47,11 +49,12 @@ def create_chiral_lattice(col,global_pos,a=30,L=10):
 
         Returns a matrix of shape (L,L,4). Where A[i,j,:] are the four indices of
         the colloidal ice object related to the site (i,j).
-
-        col: colloidal ice object
-        global_pos: chiral space lattice of size (L,L,3)
-        a: lattice constant
-        L: size of the system
+        ----------
+        Parameters:
+        * col: colloidal ice object
+        * global_pos: chiral space lattice of size (L,L,3)
+        * a: lattice constant
+        * L: size of the system
     """
 
     global_idx = np.zeros((L,L,4))
@@ -73,6 +76,12 @@ def create_chiral_lattice(col,global_pos,a=30,L=10):
     return global_idx
 
 def normalize_spin(col,idx):
+    """
+        Normalize the direction of the spin. Sometimes they are not.
+        ----------
+        * col: colloidal ice object
+        * idx: index of the colloid of interest
+    """
     vector = col[int(idx)].direction
     return vector / np.linalg.norm(vector)
 
@@ -80,9 +89,9 @@ def normalize_spin(col,idx):
 def calculate_single_chirality(col,idxs):
     """
         Computes the chirality of a single cell.
-
-        col: colloidal ice object
-        idxs: indices of the four colloids in a single cell
+        ----------
+        * col: colloidal ice object
+        * idxs: indices of the four colloids in a single cell
     """
 
 
@@ -105,14 +114,13 @@ def calculate_single_chirality(col,idxs):
         return 0
     
 def calculate_chirality(col,chiral_lattice,a,L):
-
     """
         Calculate the chirality of a state.
-
-        col: colloidal ice object
-        chiral_lattice: matrix of size (L,L,4)
-        a: lattice constant
-        L: size of the system
+        ----------
+        * col: colloidal ice object
+        * chiral_lattice: matrix of size (L,L,4)
+        * a: lattice constant
+        * L: size of the system
     """
 
     s = 0 # initialize
@@ -123,18 +131,17 @@ def calculate_chirality(col,chiral_lattice,a,L):
 
     return s
 
-def get_chirality_on_realization(params, angle,realization,last_frame=2399,foldertest='test12'):
-
+def get_chirality_on_realization(params,folder,angle,realization,last_frame=2399):
     """
         CAREFUL WITH THE PATH!
 
         Given a specific realization angle,i and the last frame of the simulation.
         Compute the chirality.
-
-        params: dictionary with the parameters of the simulation
-        angle: particular angle (colatitude)
-        realization: which realization it is being selected
-        last_frame: last frame of the simulation
+        ----------
+        * params: dictionary with the parameters of the simulation
+        * angle: particular angle (colatitude)
+        * realization: which realization it is being selected
+        * last_frame: last frame of the simulation
     """
     
     # Wasting bc i am lazy af
@@ -144,7 +151,7 @@ def get_chirality_on_realization(params, angle,realization,last_frame=2399,folde
     L = params["lattice_constant"].magnitude
     N = params["size"]
 
-    angle_path = f"../data/{foldertest}/angles/{angle}/ctrj/ctrj{realization}.csv"
+    angle_path = f"../data/{folder}/angles/{angle}/ctrj/ctrj{realization}.csv"
     current_ctrj = pd.read_csv(angle_path,index_col=[0,1])
 
     if last_frame is None:
@@ -160,6 +167,14 @@ def get_chirality_on_realization(params, angle,realization,last_frame=2399,folde
     return cur_chirality
 
 def shift_vertices(vertices,x_shift,y_shift):
+    """
+        Shifts the vertices positions
+        ----------
+        Parameters:
+        * vertices (pd Dataframe): Vertices df
+        * x_shift
+        * y_shift
+    """
 
     vertices_shifted = vertices.copy()
     vertices_shifted["x"] = vertices_shifted["x"] + x_shift
@@ -168,13 +183,13 @@ def shift_vertices(vertices,x_shift,y_shift):
     return vertices_shifted
 
 def apply_pbd_to_vertices(vertices,lattice_constant,size):
-
     """
         Apply Periodic Boundary Conditions to shifted vertices.
-
-        vertices: Dataframe of shifted vertices.
-        lattice_constant: lattice constant
-        size: size of the system
+        ----------
+        Parameters:
+        * vertices: Dataframe of shifted vertices.
+        * lattice_constant
+        * size: size of the system
     """
 
     L = lattice_constant*size
@@ -200,6 +215,11 @@ def apply_pbd_to_vertices(vertices,lattice_constant,size):
 def where_in_space_lattice(pos,space_lattice,N):
     """
         Returns indices i,j in A[i,j,:] where pos is stored
+        ----------
+        Parameters:
+        * pos: Position of a vertex
+        * space_lattice: Tensor of coordinates
+        * N: size of the system
     """
 
     for j in range(N):
@@ -214,13 +234,13 @@ def where_in_space_lattice(pos,space_lattice,N):
 
 
 def create_charge_order_lattice(params, path, space_lattice):
-
     """
         Creates a matrix with topological charges
-
-        params: simulation parameters
-        path: where the vertices file is located
-        space_lattice: correspondent lattice with the centers of the cells.
+        ----------
+        Parameters:
+        * params: simulation parameters
+        * path: where the vertices file is located
+        * space_lattice: correspondent lattice with the centers of the cells.
     """
 
     
@@ -240,6 +260,12 @@ def create_charge_order_lattice(params, path, space_lattice):
     return charges
 
 def get_charge_order(charge_lattice):
+    """
+        Complementary order parameter.
+        ----------
+        Parameters
+        * charge lattice
+    """
 
     s = 0 # initialize
 
@@ -253,6 +279,13 @@ def get_charge_order(charge_lattice):
     return s
 
 def get_charge_order_on_realization(params, folder, angle, realization):
+    """
+        Gets the complementary order parameter on a spcific realization.
+        * params: Simulation parameters
+        * folder: Specific folder test
+        * angle
+        * realization
+    """
 
     a = params["lattice_constant"].magnitude
     N = params["size"]

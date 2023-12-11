@@ -1,5 +1,6 @@
 # ============================================================= 
 # Some auxiliary functions to deal with simulated annealing
+# God bless whoever reads this code
 # Author: leogabac
 # ============================================================= 
 
@@ -23,6 +24,10 @@ idx = pd.IndexSlice
 def flip_colloid_at_index(col, index):
     """
         Flips the direction of a given colloid at a certain index.
+        ----------
+        Parameters:
+        * col: colloidal ice object
+        * index
     """
 
     #col2 = col.copy(deep = True) 
@@ -35,7 +40,12 @@ def flip_colloid_at_index(col, index):
 def flip_colloids(col, amount = 1, indices = None):
     """
         Flips many colloids randomly.
-        Give an indices list for nonrandom flips
+        If indices is None, picks randomly.
+        ----------
+        Parameters:
+        * col: colloidal ice object
+        * amount
+        * indices (list or None)
     """
 
     if indices is None:
@@ -45,31 +55,40 @@ def flip_colloids(col, amount = 1, indices = None):
         col = flip_colloid_at_index(col,index)
     return col
 
-def is_accepted(dE,T):
+def is_accepted(dE,T, kB =1):
     """
-        Acceptation function for simulated annealing.
-        Takes dE (Energy difference) and T (Temperature)
+        Acceptance function for simulated annealing.
+        ----------
+        Parameters:
+        * dE: Energy difference
+        * T: Temperature
+        * kB (obtional): Bolzman constant, defaults to 1.
     """
 
     if dE < 0:
         return True
     else:
         r = np.random.rand()
-        if r < np.exp(-dE/T):
+        if r < np.exp(-dE/kB/T):
             return True
         else:
             return False
         
-def get_index_from_position(col,pos):
+def get_index_from_position(col,pos, tol=0.1):
     """
-        Given the position of a colloid, returns its index in the colloidal ice object.
+        Gets the index of a colloid in a particular position.
+        ----------
+        Parameters:
+        * col: colloidal ice object
+        * pos: Position vector in 3D
+        * tol: Tolerance, defaults to 0.1
     """
 
     for idx,c in enumerate(col):
         currentPos = c.center.magnitude.round()
         sepNorm = np.linalg.norm(currentPos - pos)
 
-        if isclose(0,sepNorm,abs_tol=0.1):
+        if isclose(0,sepNorm,abs_tol=tol):
             return idx
 
 
@@ -77,7 +96,12 @@ def fix_position(position,a,size):
     """
         Fixes the position to fit in the box
         0 < x < size*a, and 
-        0 < y < size*a 
+        0 < y < size*a
+        ----------
+        Parameters:
+        * position: Position vector in 3D
+        * a: lattice constant
+        * size: size of the system
     """
     L = size*a
 
@@ -97,6 +121,9 @@ def fix_position(position,a,size):
 def is_horizontal(direction):
     """
         Checks if a given direction is horizontal.
+        ----------
+        Parameters:
+        * direction
     """
     x = np.array([1,0,0])
     dotP = np.dot(direction,x)
@@ -108,7 +135,12 @@ def is_horizontal(direction):
 
 def flip_loop(col, a=30, size=10):
     """
-        Given a colloidal_ice object. Flips spins in a counter clockwise loop.
+        Flips spins in a counter clockwise loop.
+        ----------
+        Parameters:
+        * col: colloidal ice object
+        * a: lattice constant
+        * size
     """
 
     sel = np.random.randint(0,len(col))
