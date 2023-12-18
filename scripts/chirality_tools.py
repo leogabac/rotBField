@@ -212,7 +212,7 @@ def apply_pbd_to_vertices(vertices,lattice_constant,size):
 
     return vertices
 
-def where_in_space_lattice(pos,space_lattice,N):
+def where_in_space_lattice(pos,space_lattice,N,tol=0.1):
     """
         Returns indices i,j in A[i,j,:] where pos is stored
         ----------
@@ -228,12 +228,12 @@ def where_in_space_lattice(pos,space_lattice,N):
             current_space_pos = space_lattice[j,k,:2]
             distance = np.linalg.norm(pos - current_space_pos)
                 
-            if isclose(distance,0,abs_tol=0.2):
+            if isclose(distance,0,abs_tol=tol):
                 return j,k
 
 
 
-def create_charge_order_lattice(params, path, space_lattice):
+def create_charge_order_lattice(params, path, space_lattice,tol=0.1):
     """
         Creates a matrix with topological charges
         ----------
@@ -253,7 +253,7 @@ def create_charge_order_lattice(params, path, space_lattice):
 
     for i,pos in enumerate(vertices_corrected[["x","y"]].to_numpy()):
 
-        j,k = where_in_space_lattice(pos, space_lattice, N)
+        j,k = where_in_space_lattice(pos, space_lattice, N,tol=tol)
 
         charges[j,k] = vertices_corrected["charge"][i]
 
@@ -278,7 +278,7 @@ def get_charge_order(charge_lattice):
     
     return s
 
-def get_charge_order_on_realization(params, folder, angle, realization):
+def get_charge_order_on_realization(params, folder, angle, realization, tol=0.1):
     """
         Gets the complementary order parameter on a spcific realization.
         * params: Simulation parameters
@@ -292,7 +292,7 @@ def get_charge_order_on_realization(params, folder, angle, realization):
 
     path = f"../data/{folder}/vertices/{angle}/vertices{realization}.csv"
     space_lattice = create_chiral_space_lattice(a=a,L=N,spos=(a/2,a/2))
-    charge_lattice = create_charge_order_lattice(params, path,space_lattice)
+    charge_lattice = create_charge_order_lattice(params, path,space_lattice,tol=tol)
     return get_charge_order(charge_lattice)
 
 

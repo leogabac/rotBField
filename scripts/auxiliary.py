@@ -29,7 +29,7 @@ def plotColloid(trj, frame):
         * frame
     """
 
-    f, ax = plt.subplots(figsize=(5, 5)); # Initialize
+    fig, ax = plt.subplots(figsize=(5, 5)); # Initialize
 
     trj_particle = trj[trj.type==1]
     trj_trap = trj[trj.type==2]
@@ -43,7 +43,29 @@ def plotColloid(trj, frame):
     ax.plot(xtrap,ytrap,'o', color='g')
 
     ax.axis("square");
-    return f,ax
+    return fig,ax
+
+def save_colloid_fig(path,trj,frame):
+    
+    fig, ax = plt.subplots(figsize=(5, 5)); # Initialize
+
+    trj_particle = trj[trj.type==1]
+    trj_trap = trj[trj.type==2]
+
+    xparticle = np.array(trj_particle.loc[idx[frame,:],"x"])
+    yparticle = np.array(trj_particle.loc[idx[frame,:],"y"])
+    ax.plot(xparticle,yparticle,'o', color='y')
+
+    xtrap = np.array(trj_trap.loc[idx[frame,:],"x"])
+    ytrap = np.array(trj_trap.loc[idx[frame,:],"y"])
+    ax.plot(xtrap,ytrap,'o', color='g')
+
+    ax.axis("square");
+    
+    fig.savefig(path+str(frame)+".png",dpi=300)
+    plt.close(fig)
+    return None
+    
 
 def classifyVertices(vrt):
     """

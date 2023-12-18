@@ -1,5 +1,2 @@
 data/
-scripts/test.lammpstrj
-scripts/test.lmpdata
-scripts/test.lmpin
-scripts/test.log
+data/lammps_files
