@@ -64,12 +64,12 @@ def is_accepted(dE,T, kB =1):
         * T: Temperature
         * kB (obtional): Bolzman constant, defaults to 1.
     """
-
+    division = (dE/kB/T).to_base_units().magnitude
     if dE < 0:
         return True
     else:
         r = np.random.rand()
-        if r < np.exp(-dE/kB/T):
+        if r < np.exp(-division):
             return True
         else:
             return False

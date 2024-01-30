@@ -166,6 +166,42 @@ def get_chirality_on_realization(params,folder,angle,realization,last_frame=2399
 
     return cur_chirality
 
+def get_chirality_on_realization2(params,data_path,realization,sel_frame=2399):
+    """
+        I made this one to not break old codes...
+        This thing does the same as the one above
+
+        Given a specific realization angle,i and the last frame of the simulation.
+        Compute the chirality.
+        ----------
+        * params: dictionary with the parameters of the simulation
+        * angle: particular angle (colatitude)
+        * realization: which realization it is being selected
+        * sel_frame: last frame of the simulation
+    """
+    
+    # Wasting bc i am lazy af
+    particle = params["particle"]
+    trap = params["trap"]
+    particle_radius = params["particle_radius"]
+    L = params["lattice_constant"].magnitude
+    N = params["size"]
+
+    angle_path = f"{data_path}/ctrj/ctrj{realization}.csv"
+    current_ctrj = pd.read_csv(angle_path,index_col=[0,1])
+
+    if sel_frame is None:
+        sel_frame = current_ctrj.index.get_level_values("frame").unique().max()
+    
+    state_ctrj = current_ctrj.loc[idx[sel_frame,:]].drop(["t", "type"],axis=1)
+    current_col = get_colloids_from_ctrj(state_ctrj,particle,trap,particle_radius,L,N)
+
+    pos_lattice = create_chiral_space_lattice(a=L,L=N,spos=(L/2,L/2))
+    idx_lattice = create_chiral_lattice(current_col,pos_lattice,L,N)
+    cur_chirality = calculate_chirality(current_col,idx_lattice,L,N)
+
+    return cur_chirality
+
 def shift_vertices(vertices,x_shift,y_shift):
     """
         Shifts the vertices positions
@@ -281,6 +317,7 @@ def get_charge_order(charge_lattice):
 def get_charge_order_on_realization(params, folder, angle, realization, tol=0.1):
     """
         Gets the complementary order parameter on a spcific realization.
+        Supposes that the vertices file is single frame.
         * params: Simulation parameters
         * folder: Specific folder test
         * angle
@@ -295,6 +332,53 @@ def get_charge_order_on_realization(params, folder, angle, realization, tol=0.1)
     charge_lattice = create_charge_order_lattice(params, path,space_lattice,tol=tol)
     return get_charge_order(charge_lattice)
 
+def create_charge_order_lattice_from_multiindex(params, path, space_lattice,frame,tol=0.1):
+    """
+        Creates a matrix with topological charges from a multiindex file at a given frame
+        ----------
+        Parameters:
+        * params: simulation parameters
+        * path: where the vertices file is located
+        * space_lattice: correspondent lattice with the centers of the cells.
+    """
 
+    
+    a = params["lattice_constant"].magnitude
+    N = params["size"]
+
+    charges = np.zeros((N,N))
+    full_vertices = pd.read_csv(path, index_col=[0,1])
+    vertices = full_vertices.loc[frame,:]
+    
+    # here goes some shitty code that extracts the single frame that i need
+    
+    vertices_corrected = apply_pbd_to_vertices(shift_vertices(vertices,a/2,-a/2),a,N)
+
+    for i,pos in enumerate(vertices_corrected[["x","y"]].to_numpy()):
+
+        j,k = where_in_space_lattice(pos, space_lattice, N,tol=tol)
+
+        charges[j,k] = vertices_corrected["charge"][i]
+
+    return charges
+
+def get_charge_order_on_frame_on_realization(params,path,frame,realization,tol=0.1):
+    """
+        Gets the complementary order parameter on a spcific realization at desired frame.
+        Assumes that the vertices file is a multiindex.
+        * params: Simulation parameters
+        * folder: Specific folder test
+        * angle
+        * realization
+    """
+    
+    a = params["lattice_constant"].magnitude
+    N = params["size"]
+    vrt_path = os.path.join(path,"vertices",f"vertices{realization}.csv")
+    space_lattice = create_chiral_space_lattice(a=a,L=N,spos=(a/2,a/2))
+    charge_lattice = create_charge_order_lattice_from_multiindex(params, vrt_path,space_lattice,frame,tol=tol)
+    return get_charge_order(charge_lattice)
+    
+    
 
 

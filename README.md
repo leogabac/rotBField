@@ -41,3 +41,18 @@ Evolution of 90deg GS.
 
 **Test 9**\
 Lots of Simulated Annealing for $\theta$.
+
+**Test 10**\
+Chirality computations
+
+**Test 11**\
+Getting the GS for all angles + order parameters.
+Here the draw_frame is used.
+Parallelized.
+
+**Test 12**\
+Same as 11.
+Thermal ice
+
+**Test 13**\
+Vertices counting (Used for poster)
