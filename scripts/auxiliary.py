@@ -312,5 +312,5 @@ def get_vertices_at_frame(ctrj,frame):
 
     return v.vertices
 
-
-
+def drop_from_ctrj(ctrj):
+    return ctrj.drop(columns={'type','t'})
