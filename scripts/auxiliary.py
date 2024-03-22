@@ -100,7 +100,11 @@ def getVerticesDict(path):
     verticesExp = {} # Initialize
     numberExperiments = len(files)
     for i in range(1,numberExperiments+1):
-        filePath = path + f"vertices{i}.csv"
+        filePath = os.path.join(path,f"vertices{i}.csv")
+        
+        # Check if the file exists, if not, skips.
+        if not os.path.isfile(filePath):continue
+        
         vrt = pd.read_csv(filePath, index_col=[0,1])
         vrt = classifyVertices(vrt)
         vrt = vrt.dropna()
@@ -312,5 +316,206 @@ def get_vertices_at_frame(ctrj,frame):
 
     return v.vertices
 
-def drop_from_ctrj(ctrj):
+
+def get_min_from_domain(f,domain):
+    
+    """
+        Returns the value in domain that minimizes f.
+        ----------
+        Parameters:
+        * f: function
+        * domain: iterable
+    """
+    
+    feval = [f(x) for x in domain]
+    idx = np.argmin(feval)
+    return domain[idx]
+
+def get_pbc_distance(params,xi,xj):
+    """
+        Returns the real distance between xi and xj in 3D space with PBC.
+        ASSUMES POSITION UNITS ARE THE SAME AS LATTICE CONSTANT UNITS
+        ----------
+        Parameters:
+        * params: simulation parameters
+        * xi: particle position
+        * xj: particle position
+    """
+    
+    L = params['size']*params['lattice_constant'].magnitude
+    
+    # For reference, this line returns the true differences
+    # [ xi-xj , yi-yj , zi-zj ]
+    xij_pbc = np.array(list(map( lambda xu: get_min_from_domain(np.abs,[xu,xu+L,xu-L]), xi-xj )))
+    distance = np.sqrt(sum(xij_pbc**2))
+    
+    return distance * params['lattice_constant'].units, xij_pbc/distance
+
+def dipole_pair_energy(params,xi,xj,Bhat = np.array([1,0,0])):
+    
+    """
+        Computes the magnetic dipole interaction energy between a pair of particles.
+        Returns a value in pN*nm
+       ----------
+        Parameters:
+        * params: simulation parameters
+        * xi: particle position
+        * xj: particle position
+        * Bhat: Magnetic field direction
+    """    
+    
+    # Get the distance and magnetic moment
+    distance, rhat = get_pbc_distance(params,xi,xj)
+    
+    dimensional = (- params['mu0']*params['m']**2/4/np.pi/distance**3).to( ureg.pN * ureg.nm)
+    adimensional = 3*Bhat.dot(rhat)**2 - 1
+    
+    
+    return (dimensional.magnitude * adimensional)
+
+def calculate_energy(params,sel_particles):
+    
+    """
+        Computes the magnetic dipole total energy in the system
+        Returns a value in pN*nm
+       ----------
+        Parameters:
+        * params: simulation parameters
+        * sel_particles: some dataframe with id and x y z coordinates at given frame
+        * frame
+    """   
+    #particles = trj[trj.type==1]
+    #sel_particles = particles.loc[idx[frame,['x','y','z']]]
+    n = len(sel_particles)
+    H = sum(
+        dipole_pair_energy(params,
+                    sel_particles.loc[idx[i]].to_numpy(), 
+                    sel_particles.loc[idx[j]].to_numpy())
+        for i in range(1,n+1) for j in range(i+1,n+1)
+        )
+    
+    return H
+
+def get_coordinates_at_frame(trj,frame):
+    """
+        Given a trj file. Retrieves the the positions of the particles at a given frame.
+        ----------
+        Parameters:
+        * trj
+        * frame
+    """
+    
+    particles = trj[trj.type==1]
+    sel_particles = particles.loc[idx[frame,['x','y','z']]]
+    
+    return sel_particles
+
+def get_positions_from_ctrj(ctrj):
+    """
+        Given a ctrj file. Retrieves the positions of the particles.
+        This is used to compute energy.
+        ----------
+        Parameters:
+        * ctrj
+    """
+    
+    x = (ctrj['x'] + ctrj['cx']).to_numpy() 
+    y = (ctrj['y'] + ctrj['cy']).to_numpy() 
+    z = (ctrj['z'] + ctrj['cz']).to_numpy()
+    
+    stuff = pd.DataFrame(data =np.column_stack((x,y,z)), columns=['x','y','z'], index=list(range(1,len(ctrj)+1)))
+    stuff.rename_axis('id', inplace=True)
+    
+    return stuff
+
+def dropvis(ctrj):
+    """
+        Drop some columns of the ctrj files for drawing.
+        ----------
+        Parameters:
+        * ctrj
+    """
     return ctrj.drop(columns={'type','t'})
+
+
+def load_ctrj_and_vertices(params,data_path,size,realization = 1):
+    """
+        Previously get_ctrj_and_vertices_from_file
+        Loads ctrj and vertices object.
+        ----------
+        Parameters:
+        * params
+        * data_path
+        * size
+        * realization
+    """
+    params['size'] = size
+    ctrj = pd.read_csv(os.path.join(data_path,str(size),'ctrj','ctrj1.csv'),index_col=[0,1])
+    vrt = pd.read_csv(os.path.join(data_path,str(size),'vertices','vertices1.csv'),index_col=[0,1])
+    last_frame = vrt.index.get_level_values('frame').unique()[-1]
+    
+    v = ice.vertices()
+    v.vertices = vrt
+    
+    return params,ctrj,v,last_frame
+
+def get_rparalell(ctrj,particle,frame):
+    
+    """
+        Computes the r_parallel component
+       ----------
+        Parameters:
+        * ctrj
+        * particle: particle id in dataframe
+        * frame
+    """   
+        
+    psel = ctrj.loc[idx[frame,particle]]
+    
+    r = psel[['cx','cy','cz']].to_numpy()
+    
+    # Note that here I used the absolute value of the direction
+    # To only get whether it is vertical or horizontal component
+    direction = psel[['dx','dy','dz']].to_numpy()
+    direction = np.abs(direction)/np.linalg.norm(direction)
+    #direction = direction/np.linalg.norm(direction)
+    
+    rp = np.dot(r,direction)
+    
+    
+    return rp
+
+def autocorrelation(ts):
+    """
+        Computes the autocorrelation function of a given timeseries. For all times.
+        ts[0]ts[i] for all i
+        ----------
+        Parameters:
+        * ts: timeseries
+    """
+   
+    element = ts[0]
+    return [tsi * element for tsi in ts]
+
+def correlate_bframes(params,ts,sframes, stime= 0, etime = 60):
+    """
+        Computes the autocorrelations between some times (start,end)
+        Returns an array in which the rows are the different particles.
+        ----------
+        Parameters:
+        * params
+        * ts: rparallel timeseries
+        * sframes: frames used in ts
+        * start: start time (s)
+        * end: end time (s)
+    
+    """
+    
+    startframe = params['framespersec'].magnitude * stime
+    goalframe = params['framespersec'].magnitude * etime
+    low = [ startframe <= sf for sf in sframes]
+    high = [ sf <= goalframe for sf in sframes]
+    whichframes = [h and l for (h,l) in zip(high,low)]
+    subselframes = np.array(sframes)[whichframes]
+    return subselframes, [ autocorrelation(np.array(ps)[whichframes]) for ps in ts]
+    
